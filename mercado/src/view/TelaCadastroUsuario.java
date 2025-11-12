@@ -1,68 +1,83 @@
 package view;
 
 import javax.swing.*;
+
+import controller.UsuarioController;
+import model.Usuario;
+
 import java.awt.*;
 import java.awt.event.*;
 
 public class TelaCadastroUsuario extends JFrame {
-	private JTextField textField;
-	private JTextField textField_1;
+    private JTextField tfNome;
+    private JTextField tfCpf;
+    private JCheckBox cbAdministrador;
+    private UsuarioController usuarioController;
 
     public TelaCadastroUsuario() {
-        setTitle("Cadastro de Usuário - Supermercado");
-        setSize(479, 300);
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        this.usuarioController = new UsuarioController();
+
+        setTitle("Cadastro de Usuário");
+        setSize(400, 250);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
-        setResizable(false);
 
-        Color fundo = new Color(255, 204, 204); // rosa claro
-
-        // Painel principal com padding
-        JPanel main = new JPanel();
-        main.setBackground(new Color(255, 228, 225));
-        main.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
-
-        getContentPane().add(main);
-        main.setLayout(null);
-        
-        JLabel lblNewLabel = new JLabel("Nome:");
-        lblNewLabel.setFont(new Font("Tahoma", Font.PLAIN, 21));
-        lblNewLabel.setBounds(16, 19, 71, 34);
-        main.add(lblNewLabel);
-        
-        textField = new JTextField();
-        textField.setBounds(108, 23, 186, 34);
-        main.add(textField);
-        textField.setColumns(10);
-        
-        JRadioButton rdbtnNewRadioButton = new JRadioButton("Administrador");
-        rdbtnNewRadioButton.setBackground(new Color(255, 228, 225));
-        rdbtnNewRadioButton.setBounds(16, 139, 109, 23);
-        main.add(rdbtnNewRadioButton);
-        
-        JLabel lblCpf = new JLabel("CPF:");
-        lblCpf.setFont(new Font("Tahoma", Font.PLAIN, 21));
-        lblCpf.setBounds(16, 64, 71, 34);
-        main.add(lblCpf);
-        
-        textField_1 = new JTextField();
-        textField_1.setColumns(10);
-        textField_1.setBounds(108, 68, 186, 34);
-        main.add(textField_1);
-        
-        JButton btnNewButton = new JButton("Salvar");
-        btnNewButton.setBounds(59, 200, 118, 23);
-        main.add(btnNewButton);
-        
-        JButton btnNewButton_1 = new JButton("Voltar");
-        btnNewButton_1.setBounds(245, 200, 118, 23);
-        main.add(btnNewButton_1);
+        initComponents();
+        setVisible(true);
     }
 
-    // Teste independente
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            new TelaCadastroUsuario().setVisible(true);
+    private void initComponents() {
+        JPanel painel = new JPanel(new GridLayout(4, 2, 10, 10));
+        JLabel lblNome = new JLabel("Nome:");
+        JLabel lblCpf = new JLabel("CPF:");
+        JLabel lblAdm = new JLabel("Administrador:");
+        tfNome = new JTextField();
+        tfCpf = new JTextField();
+        cbAdministrador = new JCheckBox();
+
+        JButton btnCadastrar = new JButton("Cadastrar");
+        JButton btnVoltar = new JButton("Voltar");
+
+        painel.add(lblNome);
+        painel.add(tfNome);
+        painel.add(lblCpf);
+        painel.add(tfCpf);
+        painel.add(lblAdm);
+        painel.add(cbAdministrador);
+        painel.add(btnCadastrar);
+        painel.add(btnVoltar);
+
+        add(painel);
+
+        btnCadastrar.addActionListener(e -> cadastrarUsuario());
+        btnVoltar.addActionListener(e -> {
+            dispose();
+            new TelaLogin();
         });
+    }
+
+    private void cadastrarUsuario() {
+        String nome = tfNome.getText().trim();
+        String cpf = tfCpf.getText().trim();
+        boolean adm = cbAdministrador.isSelected();
+
+        if (nome.isEmpty() || cpf.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Preencha todos os campos!");
+            return;
+        }
+
+        Usuario usuario = new Usuario();
+        usuario.setNome(nome);
+        usuario.setCpf(cpf);
+        usuario.setAdministrador(adm);
+
+        boolean sucesso = usuarioController.cadastrarUsuario(usuario);
+        if (sucesso) {
+            JOptionPane.showMessageDialog(this, "Usuário cadastrado com sucesso!");
+            dispose();
+            new TelaLogin();
+        } else {
+            JOptionPane.showMessageDialog(this, "Erro ao cadastrar usuário!");
+        }
     }
 }
