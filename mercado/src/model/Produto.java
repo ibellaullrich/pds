@@ -6,17 +6,15 @@ public class Produto {
     private double preco;
     private int quantidade;
 
-    // 🔹 Construtor completo
     public Produto(int id, String nome, double preco, int quantidade) {
         this.id = id;
-        this.nome = nome;
-        this.preco = preco;
-        this.quantidade = quantidade;
+        setNome(nome);
+        setPreco(preco);
+        setQuantidade(quantidade);
     }
 
     public Produto() {}
 
-    // 🔹 Getters e Setters
     public int getId() {
         return id;
     }
@@ -30,6 +28,9 @@ public class Produto {
     }
 
     public void setNome(String nome) {
+        if (nome == null || nome.trim().isEmpty()) {
+            throw new IllegalArgumentException("Nome do produto não pode ser vazio");
+        }
         this.nome = nome;
     }
 
@@ -38,6 +39,9 @@ public class Produto {
     }
 
     public void setPreco(double preco) {
+        if (preco < 0) {
+            throw new IllegalArgumentException("Preço não pode ser negativo");
+        }
         this.preco = preco;
     }
 
@@ -46,6 +50,9 @@ public class Produto {
     }
 
     public void setQuantidade(int quantidade) {
+        if (quantidade < 0) {
+            throw new IllegalArgumentException("Quantidade não pode ser negativa");
+        }
         this.quantidade = quantidade;
     }
 

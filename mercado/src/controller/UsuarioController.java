@@ -6,44 +6,53 @@ import model.Usuario;
 public class UsuarioController {
 
     public boolean cadastrarUsuario(Usuario usuario) {
-        // ✅ Corrigido: usando 'usuarios' (plural) como no UsuarioDAO
-        String sql = "INSERT INTO usuarios (nome, cpf, administrador) VALUES (?, ?, ?)";
-        try (Connection conn = ConexaoBD.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            stmt.setString(1, usuario.getNome());
-            stmt.setString(2, usuario.getCpf());
-            stmt.setBoolean(3, usuario.isAdministrador());
-            stmt.executeUpdate();
-            return true;
+        Connection conn = ConexaoBD.getConnection();
+
+        if (conn == null) return false;
+
+        String sql = "INSERT INTO usuario(nome, cpf, administrador) VALUES (?, ?, ?)";
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, usuario.getNome());
+            ps.setString(2, usuario.getCpf());
+            ps.setBoolean(3, usuario.isAdministrador());
+
+            return ps.executeUpdate() > 0;
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.err.println("Erro ao cadastrar usuário: " + e.getMessage());
             return false;
         }
     }
 
     public Usuario validarLogin(String cpf) {
-        // ✅ Corrigido: usando 'usuarios' (plural) como no UsuarioDAO
-        String sql = "SELECT * FROM usuarios WHERE cpf = ?";
-        try (Connection conn = ConexaoBD.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            stmt.setString(1, cpf);
-            ResultSet rs = stmt.executeQuery();
+        Connection conn = ConexaoBD.getConnection();
+
+        if (conn == null) return null;
+
+        String sql = "SELECT * FROM usuario WHERE cpf = ?";
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, cpf);
+            ResultSet rs = ps.executeQuery();
 
             if (rs.next()) {
-                return new Usuario(
-                    rs.getInt("id"),
-                    rs.getString("nome"),
-                    rs.getString("cpf"),
-                    rs.getBoolean("administrador")
-                );
+                Usuario u = new Usuario();
+                u.setId(rs.getInt("id"));
+                u.setNome(rs.getString("nome"));
+                u.setCpf(rs.getString("cpf"));
+                u.setAdministrador(rs.getBoolean("administrador"));
+                return u;
             }
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.err.println("Erro no login: " + e.getMessage());
         }
+
         return null;
     }
 }
