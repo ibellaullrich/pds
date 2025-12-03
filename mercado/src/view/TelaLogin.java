@@ -1,14 +1,17 @@
 package view;
 
 import javax.swing.*;
+import javax.swing.text.MaskFormatter;
 import controller.UsuarioController;
 import model.Usuario;
 import java.awt.*;
+import java.text.ParseException;
+
 import net.miginfocom.swing.MigLayout;
 
 public class TelaLogin extends JFrame {
 
-    private JTextField tfCpf;
+    private JFormattedTextField tfCpf;
     private UsuarioController usuarioController;
 
     public TelaLogin() {
@@ -34,7 +37,18 @@ public class TelaLogin extends JFrame {
         painel.setBackground(new Color(255, 249, 196));
 
         JLabel lblCpf = new JLabel("CPF:");
-        tfCpf = new JTextField(20);
+
+        MaskFormatter mascaraCPF = null;
+        try {
+            mascaraCPF = new MaskFormatter("###.###.###-##");
+            mascaraCPF.setPlaceholderCharacter('_');
+        } catch (ParseException e1) {
+            e1.printStackTrace();
+        }
+
+        tfCpf = new JFormattedTextField(mascaraCPF);
+        tfCpf.setColumns(20);
+
 
         JButton btnLogin = new JButton("Login");
         JButton btnCadastrar = new JButton("Cadastrar");
@@ -50,17 +64,21 @@ public class TelaLogin extends JFrame {
         btnLogin.addActionListener(e -> login());
         btnCadastrar.addActionListener(e -> {
             dispose();
-            new TelaCadastroUsuario();
+            try {
+				new TelaCadastroUsuario();
+			} catch (ParseException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
         });
-        
     }
 
     private void login() {
 
         String cpf = tfCpf.getText().trim();
 
-        if (cpf.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Informe o CPF!");
+        if (cpf.contains("_")) {
+            JOptionPane.showMessageDialog(this, "CPF incompleto!");
             return;
         }
 

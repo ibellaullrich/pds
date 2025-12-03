@@ -42,6 +42,7 @@ public class TelaCompra extends JFrame {
         getContentPane().add(scroll, "cell 0 0,growx,aligny top");
 
         JPanel painelInferior = new JPanel();
+        painelInferior.setBackground(SystemColor.info);
         totalLabel = new JLabel("Total: R$ 0.00");
         JButton btnAdicionar = new JButton("Adicionar ao Carrinho");
         JButton btnRemover = new JButton("Remover do Carrinho");

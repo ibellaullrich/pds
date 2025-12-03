@@ -3,12 +3,18 @@ package view;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.text.DecimalFormat;
+import java.text.ParseException;
 import java.util.List;
 
 import model.Produto;
 import model.Usuario;
 import controller.ProdutoController;
 import net.miginfocom.swing.MigLayout;
+
+import javax.swing.JFormattedTextField;
+import javax.swing.text.MaskFormatter;
+import javax.swing.text.NumberFormatter;
 
 public class TelaCadastroProduto extends JFrame {
 
@@ -17,7 +23,9 @@ public class TelaCadastroProduto extends JFrame {
 
     private JTable tabela;
     private DefaultTableModel modelo;
-    private JTextField tfNome, tfPreco, tfQuantidade;
+
+    private JTextField tfNome;
+    private JFormattedTextField tfPreco, tfQuantidade;
 
     public TelaCadastroProduto(Usuario usuario) {
         this.usuario = usuario;
@@ -28,7 +36,7 @@ public class TelaCadastroProduto extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        getContentPane().setBackground(new Color(255, 249, 196)); // Amarelo claro
+        getContentPane().setBackground(new Color(255, 249, 196));
         initComponents();
         carregarProdutos();
         setVisible(true);
@@ -37,15 +45,12 @@ public class TelaCadastroProduto extends JFrame {
     private void initComponents() {
 
         JPanel painel = new JPanel(new MigLayout(
-                "wrap 1, inset 15",      // Uma coluna principal
-                "[grow]",               // coluna flexível
-                "[][][grow]"           // 3 blocos: formulário, botões, tabela
+                "wrap 1, inset 15",
+                "[grow]",
+                "[][][grow]"
         ));
         painel.setBackground(new Color(255, 249, 196));
 
-        // ----------------------------------------------------------
-        // Formulário
-        // ----------------------------------------------------------
         JPanel formPanel = new JPanel(new MigLayout(
                 "wrap 2, inset 10",
                 "[right][grow]",
@@ -53,10 +58,48 @@ public class TelaCadastroProduto extends JFrame {
         ));
         formPanel.setBackground(new Color(255, 249, 196));
 
+        // -----------------------------------------
+        // CAMPO NOME (SOMENTE LETRAS)
+        // -----------------------------------------
         tfNome = new JTextField(20);
-        tfPreco = new JTextField(20);
-        tfQuantidade = new JTextField(20);
+        tfNome.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyTyped(java.awt.event.KeyEvent e) {
+                char c = e.getKeyChar();
+                if (!Character.isLetter(c) && c != ' ' && c != 'á' && c != 'é' &&
+                    c != 'í' && c != 'ó' && c != 'ú' && c != 'Á' && c != 'É' &&
+                    c != 'Í' && c != 'Ó' && c != 'Ú' && c != 'ã' && c != 'õ' &&
+                    c != 'ç' && c != 'Ã' && c != 'Õ' && c != 'Ç') {
+                    e.consume();
+                }
+            }
+        });
 
+        // -----------------------------------------
+        // CAMPO PREÇO (DECIMAL FLEXÍVEL)
+        // -----------------------------------------
+        NumberFormatter mascaraPreco = new NumberFormatter(new DecimalFormat("#0.00"));
+        mascaraPreco.setValueClass(Double.class);
+        mascaraPreco.setAllowsInvalid(true);
+        mascaraPreco.setCommitsOnValidEdit(true);
+
+        tfPreco = new JFormattedTextField(mascaraPreco);
+        tfPreco.setColumns(20);
+
+        // -----------------------------------------
+        // CAMPO QUANTIDADE (SOMENTE NÚMEROS)
+        // -----------------------------------------
+        MaskFormatter mascaraQtd = null;
+        try {
+            mascaraQtd = new MaskFormatter("####");
+            mascaraQtd.setPlaceholderCharacter(' ');
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
+        tfQuantidade = new JFormattedTextField(mascaraQtd);
+        tfQuantidade.setColumns(20);
+
+        // adiciona no painel
         formPanel.add(new JLabel("Nome:"));
         formPanel.add(tfNome, "growx");
 
@@ -68,9 +111,9 @@ public class TelaCadastroProduto extends JFrame {
 
         painel.add(formPanel, "growx");
 
-        // ----------------------------------------------------------
-        // Botões
-        // ----------------------------------------------------------
+        // -----------------------------------------
+        // BOTÕES
+        // -----------------------------------------
         JPanel botoes = new JPanel(new MigLayout(
                 "inset 5, wrap 4",
                 "[grow][grow][grow][grow]",
@@ -90,9 +133,9 @@ public class TelaCadastroProduto extends JFrame {
 
         painel.add(botoes, "growx");
 
-        // ----------------------------------------------------------
-        // Tabela
-        // ----------------------------------------------------------
+        // -----------------------------------------
+        // TABELA
+        // -----------------------------------------
         modelo = new DefaultTableModel(new String[]{"ID", "Nome", "Preço", "Quantidade"}, 0);
         tabela = new JTable(modelo);
 
@@ -101,13 +144,55 @@ public class TelaCadastroProduto extends JFrame {
 
         getContentPane().add(painel);
 
-        // Eventos
+        // eventos
         btnAdicionar.addActionListener(e -> adicionarProduto());
         btnEditar.addActionListener(e -> editarProduto());
         btnRemover.addActionListener(e -> removerProduto());
         btnSair.addActionListener(e -> sair());
     }
 
+    // -----------------------------------------
+    // LEITURA SEGURA DOS CAMPOS FORMATADOS
+    // -----------------------------------------
+    private Double lerPrecoSeguro() {
+        try {
+            Object v = tfPreco.getValue();
+            if (v instanceof Number) return ((Number) v).doubleValue();
+
+            String s = tfPreco.getText().trim();
+            if (s.isEmpty()) return null;
+
+            s = s.replaceAll("[^0-9,.-]", "");
+            s = s.replace(',', '.');
+
+            return Double.parseDouble(s);
+
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private Integer lerQuantidadeSeguro() {
+        try {
+            Object v = tfQuantidade.getValue();
+            if (v instanceof Number) return ((Number) v).intValue();
+
+            String s = tfQuantidade.getText().trim();
+            if (s.isEmpty()) return null;
+
+            s = s.replaceAll("\\D", "");
+            if (s.isEmpty()) return null;
+
+            return Integer.parseInt(s);
+
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    // -----------------------------------------
+    // CARREGAR TABELA
+    // -----------------------------------------
     private void carregarProdutos() {
         modelo.setRowCount(0);
         List<Produto> produtos = produtoController.listarProdutos();
@@ -122,33 +207,42 @@ public class TelaCadastroProduto extends JFrame {
         }
     }
 
+    // -----------------------------------------
+    // ADICIONAR PRODUTO
+    // -----------------------------------------
     private void adicionarProduto() {
-        try {
-            String nome = tfNome.getText().trim();
-            double preco = Double.parseDouble(tfPreco.getText());
-            int quantidade = Integer.parseInt(tfQuantidade.getText());
+        String nome = tfNome.getText().trim();
+        Double preco = lerPrecoSeguro();
+        Integer quantidade = lerQuantidadeSeguro();
 
-            if (nome.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "O nome não pode estar vazio!");
-                return;
-            }
+        if (nome.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "O nome não pode estar vazio!");
+            return;
+        }
+        if (preco == null) {
+            JOptionPane.showMessageDialog(this, "Preço inválido!");
+            return;
+        }
+        if (quantidade == null) {
+            JOptionPane.showMessageDialog(this, "Quantidade inválida!");
+            return;
+        }
 
-            Produto produto = new Produto(0, nome, preco, quantidade);
-            boolean sucesso = produtoController.adicionarProduto(produto);
+        Produto produto = new Produto(0, nome, preco, quantidade);
+        boolean sucesso = produtoController.adicionarProduto(produto);
 
-            if (sucesso) {
-                JOptionPane.showMessageDialog(this, "Produto adicionado com sucesso!");
-                carregarProdutos();
-                limparCampos();
-            } else {
-                JOptionPane.showMessageDialog(this, "Erro ao adicionar produto.");
-            }
-
-        } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "Preço e quantidade devem ser numéricos.");
+        if (sucesso) {
+            JOptionPane.showMessageDialog(this, "Produto adicionado com sucesso!");
+            carregarProdutos();
+            limparCampos();
+        } else {
+            JOptionPane.showMessageDialog(this, "Erro ao adicionar produto.");
         }
     }
 
+    // -----------------------------------------
+    // EDITAR PRODUTO
+    // -----------------------------------------
     private void editarProduto() {
         int linha = tabela.getSelectedRow();
         if (linha == -1) {
@@ -156,27 +250,40 @@ public class TelaCadastroProduto extends JFrame {
             return;
         }
 
-        try {
-            int id = (int) modelo.getValueAt(linha, 0);
-            String nome = tfNome.getText().trim();
-            double preco = Double.parseDouble(tfPreco.getText());
-            int quantidade = Integer.parseInt(tfQuantidade.getText());
+        int id = (int) modelo.getValueAt(linha, 0);
 
-            Produto produto = new Produto(id, nome, preco, quantidade);
-            boolean sucesso = produtoController.atualizarProduto(produto);
+        String nome = tfNome.getText().trim();
+        Double preco = lerPrecoSeguro();
+        Integer quantidade = lerQuantidadeSeguro();
 
-            if (sucesso) {
-                JOptionPane.showMessageDialog(this, "Produto atualizado com sucesso!");
-                carregarProdutos();
-            } else {
-                JOptionPane.showMessageDialog(this, "Erro ao atualizar produto.");
-            }
+        if (nome.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "O nome não pode estar vazio!");
+            return;
+        }
+        if (preco == null) {
+            JOptionPane.showMessageDialog(this, "Preço inválido!");
+            return;
+        }
+        if (quantidade == null) {
+            JOptionPane.showMessageDialog(this, "Quantidade inválida!");
+            return;
+        }
 
-        } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "Preço e quantidade devem ser numéricos.");
+        Produto produto = new Produto(id, nome, preco, quantidade);
+        boolean sucesso = produtoController.atualizarProduto(produto);
+
+        if (sucesso) {
+            JOptionPane.showMessageDialog(this, "Produto atualizado com sucesso!");
+            carregarProdutos();
+            limparCampos();
+        } else {
+            JOptionPane.showMessageDialog(this, "Erro ao atualizar produto.");
         }
     }
 
+    // -----------------------------------------
+    // REMOVER PRODUTO
+    // -----------------------------------------
     private void removerProduto() {
         int linha = tabela.getSelectedRow();
         if (linha == -1) {
@@ -190,6 +297,7 @@ public class TelaCadastroProduto extends JFrame {
         if (sucesso) {
             JOptionPane.showMessageDialog(this, "Produto removido com sucesso!");
             carregarProdutos();
+            limparCampos();
         } else {
             JOptionPane.showMessageDialog(this, "Erro ao remover produto.");
         }
@@ -202,7 +310,7 @@ public class TelaCadastroProduto extends JFrame {
 
     private void limparCampos() {
         tfNome.setText("");
-        tfPreco.setText("");
-        tfQuantidade.setText("");
+        tfPreco.setValue(null);
+        tfQuantidade.setValue(null);
     }
 }
